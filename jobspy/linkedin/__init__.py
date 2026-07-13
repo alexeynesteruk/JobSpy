@@ -66,6 +66,8 @@ class LinkedIn(Scraper):
             clear_cookies=True,
         )
         self.session.headers.update(headers)
+        if user_agent:
+            self.session.headers["user-agent"] = user_agent
         self.scraper_input = None
         self.country = "worldwide"
         self.job_url_direct_regex = re.compile(r'(?<=\?url=)[^"]+')
@@ -92,6 +94,10 @@ class LinkedIn(Scraper):
             log.info(
                 f"search page: {request_count} / {math.ceil(scraper_input.results_wanted / 10)}"
             )
+            if seconds_old is not None and scraper_input.easy_apply:
+                log.warning(
+                    "LinkedIn: hours_old is active; easy_apply filter may be ignored by LinkedIn"
+                )
             params = {
                 "keywords": scraper_input.search_term,
                 "location": scraper_input.location,
@@ -178,9 +184,11 @@ class LinkedIn(Scraper):
         compensation = description = None
         if salary_tag:
             salary_text = salary_tag.get_text(separator=" ").strip()
-            salary_values = [currency_parser(value) for value in salary_text.split("-")]
+            salary_values = [
+                currency_parser(value) for value in salary_text.split("-")
+            ]
             salary_min = salary_values[0]
-            salary_max = salary_values[1]
+            salary_max = salary_values[1] if len(salary_values) > 1 else salary_min
             currency = salary_text[0] if salary_text[0] != "$" else "USD"
 
             compensation = Compensation(

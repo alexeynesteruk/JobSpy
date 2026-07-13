@@ -49,7 +49,7 @@ class Naukri(Scraper):
         """
         Initializes NaukriScraper with the Naukri API URL
         """
-        super().__init__(Site.NAUKRI, proxies=proxies, ca_cert=ca_cert)
+        super().__init__(Site.NAUKRI, proxies=proxies, ca_cert=ca_cert, user_agent=user_agent)
         self.session = create_session(
             proxies=self.proxies,
             ca_cert=ca_cert,
@@ -59,6 +59,8 @@ class Naukri(Scraper):
             clear_cookies=True,
         )
         self.session.headers.update(naukri_headers)
+        if self.user_agent:
+            self.session.headers["user-agent"] = self.user_agent
         self.scraper_input = None
         self.country = "India"  #naukri is india-focused by default
         log.info("Naukri scraper initialized")
@@ -130,8 +132,7 @@ class Naukri(Scraper):
                 log.debug(f"Processing job ID: {job_id}")
 
                 try:
-                    fetch_desc = scraper_input.linkedin_fetch_description
-                    job_post = self._process_job(job, job_id, fetch_desc)
+                    job_post = self._process_job(job, job_id)
                     if job_post:
                         job_list.append(job_post)
                         log.info(f"Added job: {job_post.title} (ID: {job_id})")
@@ -150,7 +151,7 @@ class Naukri(Scraper):
         return JobResponse(jobs=job_list)
 
     def _process_job(
-        self, job: dict, job_id: str, full_descr: bool
+        self, job: dict, job_id: str
     ) -> Optional[JobPost]:
         """
         Processes a single job from API response into a JobPost object
@@ -164,7 +165,7 @@ class Naukri(Scraper):
         date_posted = self._parse_date(job.get("footerPlaceholderLabel"), job.get("createdDate"))
 
         job_url = f"https://www.naukri.com{job.get('jdURL', f'/job/{job_id}')}"
-        raw_description = job.get("jobDescription") if full_descr else None
+        raw_description = job.get("jobDescription")
 
         job_type = parse_job_type(raw_description) if raw_description else None
         company_industry = parse_company_industry(raw_description) if raw_description else None

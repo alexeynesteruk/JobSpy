@@ -28,7 +28,7 @@ class Google(Scraper):
         Initializes Google Scraper with the Goodle jobs search url
         """
         site = Site(Site.GOOGLE)
-        super().__init__(site, proxies=proxies, ca_cert=ca_cert)
+        super().__init__(site, proxies=proxies, ca_cert=ca_cert, user_agent=user_agent)
 
         self.country = None
         self.session = None
@@ -50,6 +50,8 @@ class Google(Scraper):
         self.session = create_session(
             proxies=self.proxies, ca_cert=self.ca_cert, is_tls=False, has_retry=True
         )
+        if self.user_agent:
+            self.session.headers["user-agent"] = self.user_agent
         forward_cursor, job_list = self._get_initial_cursor_and_jobs()
         if forward_cursor is None:
             log.warning(

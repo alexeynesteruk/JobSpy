@@ -157,11 +157,11 @@ def markdown_converter(description_html: str):
     markdown = md(description_html)
     return markdown.strip()
 
-def plain_converter(decription_html:str):
+def plain_converter(description_html: str):
     from bs4 import BeautifulSoup
-    if decription_html is None:
+    if description_html is None:
         return None
-    soup = BeautifulSoup(decription_html, "html.parser")
+    soup = BeautifulSoup(description_html, "html.parser")
     text = soup.get_text(separator=" ")
     text = re.sub(r'\s+',' ',text)
     return text.strip()
@@ -298,7 +298,8 @@ def extract_job_type(description: str):
 
 
 def map_str_to_site(site_name: str) -> Site:
-    return Site[site_name.upper()]
+    normalized = site_name.strip().lower().replace("-", "_")
+    return Site[normalized.upper()]
 
 
 def get_enum_from_value(value_str):

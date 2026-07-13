@@ -27,7 +27,7 @@ class BaytScraper(Scraper):
     def __init__(
         self, proxies: list[str] | str | None = None, ca_cert: str | None = None, user_agent: str | None = None
     ):
-        super().__init__(Site.BAYT, proxies=proxies, ca_cert=ca_cert)
+        super().__init__(Site.BAYT, proxies=proxies, ca_cert=ca_cert, user_agent=user_agent)
         self.scraper_input = None
         self.session = None
         self.country = "worldwide"
@@ -37,6 +37,8 @@ class BaytScraper(Scraper):
         self.session = create_session(
             proxies=self.proxies, ca_cert=self.ca_cert, is_tls=False, has_retry=True
         )
+        if self.user_agent:
+            self.session.headers["user-agent"] = self.user_agent
         job_list: list[JobPost] = []
         page = 1
         results_wanted = (

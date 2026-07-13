@@ -51,7 +51,7 @@ class BDJobs(Scraper):
         """
         Initializes BDJobsScraper with the BDJobs job search url
         """
-        super().__init__(Site.BDJOBS, proxies=proxies, ca_cert=ca_cert)
+        super().__init__(Site.BDJOBS, proxies=proxies, ca_cert=ca_cert, user_agent=user_agent)
         self.session = create_session(
             proxies=self.proxies,
             ca_cert=ca_cert,
@@ -61,6 +61,8 @@ class BDJobs(Scraper):
             clear_cookies=True,
         )
         self.session.headers.update(headers)
+        if self.user_agent:
+            self.session.headers["user-agent"] = self.user_agent
         self.scraper_input = None
         self.country = "bangladesh"
 
@@ -230,12 +232,11 @@ class BDJobs(Scraper):
             job_post = JobPost(
                 id=job_id,
                 title=title,
-                company_name=company_name,  # Use company_name instead of company
+                company_name=company_name,
                 location=location,
                 date_posted=date_posted,
                 job_url=job_url,
                 is_remote=is_remote,
-                site=self.site,
             )
 
             # Always fetch description for BDJobs
@@ -267,15 +268,13 @@ class BDJobs(Scraper):
             # Try to find the job content div first (as in correct.py)
             job_content_div = soup.find("div", class_="jobcontent")
             if job_content_div:
-                # Look for responsibilities section
                 responsibilities_heading = job_content_div.find(
                     "h4", id="job_resp"
                 ) or job_content_div.find(
                     ["h4", "h5"], string=lambda s: s and "responsibilities" in s.lower()
                 )
+                responsibilities_elements = []
                 if responsibilities_heading:
-                    responsibilities_elements = []
-                    # Find all following elements until the next heading or hr
                     for sibling in responsibilities_heading.find_next_siblings():
                         if sibling.name in ["hr", "h4", "h5"]:
                             break
@@ -289,11 +288,7 @@ class BDJobs(Scraper):
                                 sibling.get_text(separator=" ", strip=True)
                             )
 
-                description = (
-                    "\n".join(responsibilities_elements)
-                    if responsibilities_elements
-                    else ""
-                )
+                description = "\n".join(responsibilities_elements)
 
             # If no description found yet, try the original approach
             if not description:

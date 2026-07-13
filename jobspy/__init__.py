@@ -13,7 +13,7 @@ from jobspy.indeed import Indeed
 from jobspy.linkedin import LinkedIn
 from jobspy.naukri import Naukri
 from jobspy.model import JobType, Location, JobResponse, Country
-from jobspy.model import SalarySource, ScraperInput, Site
+from jobspy.model import SalarySource, ScraperInput, Site, DescriptionFormat
 from jobspy.util import (
     set_logger_level,
     extract_salary,
@@ -67,6 +67,11 @@ def scrape_jobs(
     }
     set_logger_level(verbose)
     job_type = get_enum_from_value(job_type) if job_type else None
+    description_format_enum = (
+        DescriptionFormat(description_format.lower())
+        if isinstance(description_format, str)
+        else description_format
+    )
 
     def get_site_type():
         site_types = list(Site)
@@ -93,7 +98,7 @@ def scrape_jobs(
         is_remote=is_remote,
         job_type=job_type,
         easy_apply=easy_apply,
-        description_format=description_format,
+        description_format=description_format_enum,
         linkedin_fetch_description=linkedin_fetch_description,
         results_wanted=results_wanted,
         linkedin_company_ids=linkedin_company_ids,
@@ -130,7 +135,7 @@ def scrape_jobs(
 
     for site, job_response in site_to_jobs_dict.items():
         for job in job_response.jobs:
-            job_data = job.dict()
+            job_data = job.model_dump()
             job_url = job_data["job_url"]
             job_data["site"] = site
             job_data["company"] = job_data["company_name"]
@@ -221,7 +226,15 @@ def scrape_jobs(
         return pd.DataFrame()
 
 
-# Add BDJobs to __all__
+# Public API exports
 __all__ = [
+    "scrape_jobs",
     "BDJobs",
+    "BaytScraper",
+    "Glassdoor",
+    "Google",
+    "Indeed",
+    "LinkedIn",
+    "Naukri",
+    "ZipRecruiter",
 ]

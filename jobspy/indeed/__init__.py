@@ -33,7 +33,9 @@ class Indeed(Scraper):
         """
         Initializes IndeedScraper with the Indeed API url
         """
-        super().__init__(Site.INDEED, proxies=proxies)
+        super().__init__(
+            Site.INDEED, proxies=proxies, ca_cert=ca_cert, user_agent=user_agent
+        )
 
         self.session = create_session(
             proxies=self.proxies, ca_cert=ca_cert, is_tls=False
@@ -110,6 +112,8 @@ class Indeed(Scraper):
         }
         api_headers_temp = api_headers.copy()
         api_headers_temp["indeed-co"] = self.api_country_code
+        if self.user_agent:
+            api_headers_temp["user-agent"] = self.user_agent
         response = self.session.post(
             self.api_url,
             headers=api_headers_temp,
@@ -141,6 +145,18 @@ class Indeed(Scraper):
         """
         filters_str = ""
         if self.scraper_input.hours_old:
+            ignored_filters = []
+            if self.scraper_input.is_remote:
+                ignored_filters.append("is_remote")
+            if self.scraper_input.job_type:
+                ignored_filters.append("job_type")
+            if self.scraper_input.easy_apply:
+                ignored_filters.append("easy_apply")
+            if ignored_filters:
+                log.warning(
+                    "Indeed: hours_old is active; the following filters are ignored: "
+                    + ", ".join(ignored_filters)
+                )
             filters_str = """
             filters: {{
                 date: {{
