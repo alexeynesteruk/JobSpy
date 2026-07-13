@@ -64,10 +64,11 @@ class Glassdoor(Scraper):
             proxies=self.proxies, ca_cert=self.ca_cert, has_retry=True
         )
         token = self._get_csrf_token()
-        headers["gd-csrf-token"] = token if token else fallback_token
+        request_headers = headers.copy()
+        request_headers["gd-csrf-token"] = token if token else fallback_token
         if self.user_agent:
-            headers["user-agent"] = self.user_agent
-        self.session.headers.update(headers)
+            request_headers["user-agent"] = self.user_agent
+        self.session.headers.update(request_headers)
 
         location_id, location_type = self._get_location(
             scraper_input.location, scraper_input.is_remote
@@ -189,7 +190,7 @@ class Glassdoor(Scraper):
         compensation = parse_compensation(job["header"])
         try:
             description = self._fetch_job_description(job_id)
-        except:
+        except Exception:
             description = None
         company_url = f"{self.base_url}Overview/W-EI_IE{company_id}.htm"
         company_logo = (

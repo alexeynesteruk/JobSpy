@@ -44,7 +44,6 @@ class Indeed(Scraper):
         self.jobs_per_page = 100
         self.num_workers = 10
         self.seen_urls = set()
-        self.headers = None
         self.api_country_code = None
         self.base_url = None
         self.api_url = "https://apis.indeed.com/graphql"
@@ -58,8 +57,6 @@ class Indeed(Scraper):
         self.scraper_input = scraper_input
         domain, self.api_country_code = self.scraper_input.country.indeed_domain_value
         self.base_url = f"https://{domain}.indeed.com"
-        self.headers = api_headers.copy()
-        self.headers["indeed-co"] = self.scraper_input.country.indeed_domain_value
         job_list = []
         page = 1
 

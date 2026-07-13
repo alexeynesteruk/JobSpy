@@ -86,7 +86,11 @@ def scrape_jobs(
             ]
         return site_types
 
-    country_enum = Country.from_string(country_indeed)
+    try:
+        country_enum = Country.from_string(country_indeed)
+    except ValueError as exc:
+        create_logger("JobSpy").warning("%s. Defaulting to USA.", exc)
+        country_enum = Country.USA
 
     scraper_input = ScraperInput(
         site_type=get_site_type(),
@@ -111,8 +115,12 @@ def scrape_jobs(
         scraper = scraper_class(proxies=proxies, ca_cert=ca_cert, user_agent=user_agent)
         scraped_data: JobResponse = scraper.scrape(scraper_input)
         cap_name = site.value.capitalize()
-        site_name = "ZipRecruiter" if cap_name == "Zip_recruiter" else cap_name
-        site_name = "LinkedIn" if cap_name == "Linkedin" else cap_name
+        if cap_name == "Zip_recruiter":
+            site_name = "ZipRecruiter"
+        elif cap_name == "Linkedin":
+            site_name = "LinkedIn"
+        else:
+            site_name = cap_name
         create_logger(site_name).info(f"finished scraping")
         return site.value, scraped_data
 

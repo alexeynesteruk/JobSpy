@@ -207,7 +207,7 @@ class ZipRecruiter(Scraper):
                     m = re.search(r"job_url=(.+)", job_url_val)
                     if m:
                         job_url_direct = m.group(1)
-            except:
+            except (json.JSONDecodeError, KeyError, TypeError, AttributeError):
                 job_url_direct = None
 
             if self.scraper_input.description_format == DescriptionFormat.MARKDOWN:

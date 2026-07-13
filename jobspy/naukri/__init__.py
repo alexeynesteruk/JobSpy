@@ -165,7 +165,7 @@ class Naukri(Scraper):
         date_posted = self._parse_date(job.get("footerPlaceholderLabel"), job.get("createdDate"))
 
         job_url = f"https://www.naukri.com{job.get('jdURL', f'/job/{job_id}')}"
-        raw_description = job.get("jobDescription")
+        raw_description = job.get("jobDescription") or job.get("description")
 
         job_type = parse_job_type(raw_description) if raw_description else None
         company_industry = parse_company_industry(raw_description) if raw_description else None

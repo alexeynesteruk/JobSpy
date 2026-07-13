@@ -8,6 +8,7 @@ from typing import Optional
 from urllib.parse import urlparse, urlunparse, unquote
 
 import regex as re
+import requests
 from bs4 import BeautifulSoup
 from bs4.element import Tag
 
@@ -226,7 +227,7 @@ class LinkedIn(Scraper):
             datetime_str = datetime_tag["datetime"]
             try:
                 date_posted = datetime.strptime(datetime_str, "%Y-%m-%d")
-            except:
+            except (ValueError, TypeError):
                 date_posted = None
         job_details = {}
         if full_descr:
@@ -265,7 +266,7 @@ class LinkedIn(Scraper):
                 f"{self.base_url}/jobs/view/{job_id}", timeout=5
             )
             response.raise_for_status()
-        except:
+        except requests.exceptions.RequestException:
             return {}
         if "linkedin.com/signup" in response.url:
             return {}
