@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import warnings
 from collections.abc import Iterable
 from concurrent.futures import ThreadPoolExecutor
@@ -32,7 +33,18 @@ from jobspy.util import (
 )
 from jobspy.ziprecruiter import ZipRecruiter
 
-__all__ = ["scrape_jobs"]
+BaytScraper = Bayt
+__all__ = [
+    "scrape_jobs",
+    "BDJobs",
+    "BaytScraper",
+    "Glassdoor",
+    "Google",
+    "Indeed",
+    "LinkedIn",
+    "Naukri",
+    "ZipRecruiter",
+]
 
 SCRAPER_MAPPING: dict[Site, type[Scraper]] = {
     Site.LINKEDIN: LinkedIn,
@@ -89,6 +101,24 @@ def scrape_jobs(
     :raises ValueError: an argument is invalid
     """
     arguments = dict(locals())
+    # Carry forward the reviewed fork's string normalization and country
+    # fallback while keeping upstream's validation for all other arguments.
+    if isinstance(description_format, str):
+        arguments["description_format"] = description_format.lower()
+    if isinstance(site_name, str):
+        arguments["site_name"] = site_name.strip().lower().replace("-", "_")
+    elif isinstance(site_name, Iterable):
+        arguments["site_name"] = [
+            name.strip().lower().replace("-", "_") if isinstance(name, str) else name
+            for name in site_name
+        ]
+    country_fallback = False
+    if isinstance(country_indeed, str) and country_indeed:
+        try:
+            arguments["country_indeed"] = Country(country_indeed)
+        except ValueError:
+            arguments["country_indeed"] = Country.USA
+            country_fallback = True
     try:
         scraper_input = ScraperInput.model_validate(
             {
@@ -111,6 +141,10 @@ def scrape_jobs(
             stacklevel=2,
         )
     configure_logging(None if verbose is None else scraper_input.verbose)
+    if country_fallback:
+        logging.getLogger(__name__).warning(
+            "Unsupported country_indeed. Defaulting to USA."
+        )
 
     def scrape_site(site: Site) -> tuple[str, Scraper, list[JobPost]]:
         scraper = SCRAPER_MAPPING[site]()

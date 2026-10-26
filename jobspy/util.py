@@ -17,10 +17,16 @@ from jobspy.model import (
     DescriptionFormat,
     JobType,
     ScraperInput,
+    Site,
 )
 
 log_handler = logging.StreamHandler()
 log_handler.setFormatter(logging.Formatter(logging.BASIC_FORMAT))
+
+
+def map_str_to_site(site_name: str) -> Site:
+    """Compatibility helper retained from the reviewed Job Scout fork."""
+    return Site(site_name.strip().lower().replace("-", "_"))
 
 
 def configure_logging(verbose: int | None) -> None:

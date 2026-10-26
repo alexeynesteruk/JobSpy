@@ -128,6 +128,13 @@ class Naukri(Scraper):
         job_id = job.jobId
         posted = job.createdDate / 1000
         details = self._shared_fields(job)
+        # Search responses sometimes already carry the JD. Keep it without a
+        # paid/additional detail fetch; the explicit job page can still enrich it.
+        inline_description = raw.get("jobDescription") or raw.get("description")
+        if isinstance(inline_description, str):
+            details |= description_fields(
+                inline_description, self.scraper_input.description_format
+            )
         if self.scraper_input.fetch_description:
             posted, page = self._fetch_details(job_id) or (posted, {})
             if too_old(posted, self.scraper_input.hours_old):

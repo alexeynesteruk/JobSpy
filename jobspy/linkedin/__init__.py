@@ -120,6 +120,8 @@ class LinkedIn(Scraper):
         }
         if scraper_input.easy_apply:
             params["f_AL"] = "true"
+            if scraper_input.hours_old:
+                self.warn("hours_old is active; easy_apply may be ignored by LinkedIn")
         if scraper_input.linkedin_company_ids:
             params["f_C"] = ",".join(map(str, scraper_input.linkedin_company_ids))
         if scraper_input.hours_old:
@@ -168,16 +170,16 @@ class LinkedIn(Scraper):
     def _parse_salary(text: str) -> Compensation:
         """ "$117,000.00/yr - $234,000.00/yr" """
         match = re.fullmatch(
-            r"([^\d\s]+) ?([\d,]+\.\d\d)(/\w+) - [^\d\s]+ ?([\d,]+\.\d\d)/\w+",
+            r"([^\d\s]+) ?(\d[\d,]*(?:\.\d{1,2})?)(/\w+)?\+?(?: [-–] [^\d\s]+ ?(\d[\d,]*(?:\.\d{1,2})?)(/\w+)?)?",
             " ".join(text.split()),
         )
         if not match:
             return Compensation()
-        currency, low, interval, high = match.groups()
+        currency, low, interval, high, high_interval = match.groups()
         return Compensation(
-            interval=pay_intervals.get(interval),
+            interval=pay_intervals.get(interval or high_interval or "/yr"),
             min_amount=float(low.replace(",", "")),
-            max_amount=float(high.replace(",", "")),
+            max_amount=float((high or low).replace(",", "")),
             currency=currencies.get(currency, currency),
         )
 
